@@ -16,12 +16,12 @@
 	<classpathentry kind="lib" path="lib/sqlitejdbc-v056.jar"/>
 	<classpathentry kind="lib" path="lib/json4processing.jar"/>
 	<classpathentry kind="lib" path="lib/libTUIO.jar"/>
-	<classpathentry kind="lib" path="lib/unfolding.0.9.beta.jar" sourcepath="/unfolding/src"/>
 	<classpathentry kind="lib" path="lib/controlP5-0.7.6.jar"/>
 	<classpathentry kind="lib" path="lib/joda-time-2.0.jar"/>
 	<classpathentry kind="lib" path="lib/pdf.jar"/>
 	<classpathentry kind="lib" path="lib/itext.jar"/>
 	<classpathentry kind="lib" path="lib/Ani.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/timerangeslider"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/unfolding"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
