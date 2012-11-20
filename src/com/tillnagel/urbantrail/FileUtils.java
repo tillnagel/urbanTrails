@@ -24,9 +24,12 @@ public class FileUtils {
 
 		// Gets a list of all files and filters by extension
 		GenericExtFilter filter = new GenericExtFilter(ext);
-		String[] list = dir.list(filter);
+		String[] fileNamesList = dir.list(filter);
+		for (int i = 0; i < fileNamesList.length; i++) {
+			fileNamesList[i] = directoryName + File.separator + fileNamesList[i];
+		}
 
-		return list;
+		return fileNamesList;
 	}
 
 	// inner class, generic extension filter
