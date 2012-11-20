@@ -26,7 +26,7 @@ import de.fhpotsdam.unfolding.utils.MapUtils;
  * Loads and displays multiple bike trails.
  */
 public class InteractiveMultiBikeTrailsApp extends PApplet {
-	
+
 	// Start location
 	Location berlinLocation = new Location(52.5f, 13.4f);
 
@@ -44,18 +44,20 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 
 		// map = new UnfoldingMap(this, 0, 0, 1200, 700, new MyMapBox.WorldDarkMapProvider());
 		map = new UnfoldingMap(this, 0, 0, 1200, 700, new MBTilesMapProvider("jdbc:sqlite:./berlin-dark.mbtiles"));
-		// map = new UnfoldingMap(this, 0, 0, 1200, 700, new StamenMapProvider.TonerLite());
+		// map = new UnfoldingMap(this, 0, 0, 1200, 700);
 		// map = new UnfoldingMap(this, 0, 0, 1200, 700, new MapBox.WorldLightProvider());
 		map.zoomAndPanTo(berlinLocation, 13);
 		map.setZoomRange(10, 17);
-		MapUtils.createDefaultEventDispatcher(this, map);
+		MapUtils.createMouseEventDispatcher(this, map);
+		//MapUtils.createDefaultEventDispatcher(this, map);
 
 		// Create line markers with outer glow
 		markerFactory = new MarkerFactory();
 		markerFactory.setLineClass(GlowLinesMarker.class);
 
 		// Load bike trails from GPX files
-		String dir = sketchPath("");
+		//String dir = sketchPath("runkeeper-2012-Aug-Sep");
+		String dir = sketchPath("test");
 		String[] gpsFileNames = FileUtils.listFile(dir, "gpx");
 		for (String gpsFileName : gpsFileNames) {
 			loadAndCreateMarkers(gpsFileName);
@@ -76,7 +78,7 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 		rect(0, 700, width, 100);
 		timeRangeSlider.draw();
 	}
-	
+
 	// Gets called each time the time ranger slider has changed, both by user interaction as well as by animation
 	public void timeUpdated(DateTime startDateTime, DateTime endDateTime) {
 		filterMarkersByTime(startDateTime, endDateTime);
@@ -92,7 +94,7 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 		if (key == 'f') {
 			println("fps: " + frameRate);
 		}
-		
+
 		// Enable key interaction
 		timeRangeSlider.onKeyPressed(key, keyCode);
 	}
@@ -104,7 +106,7 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 	public void mouseDragged() {
 		timeRangeSlider.onDragged(mouseX, mouseY, pmouseX, pmouseY);
 	}
-	
+
 	// Data ---------------------------------------------------------
 
 	private void filterMarkersByTime(DateTime startDateTime, DateTime endDateTime) {
@@ -124,7 +126,7 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 
 	public void centerAroundAllMarkers(List<Marker> markers) {
 		List<Location> locations = GeoUtils.getLocationsFromMarkers(markers);
-		Location center = GeoUtils.getCentroid(locations);
+		Location center = GeoUtils.getEuclideanCentroid(locations);
 		map.panTo(center);
 	}
 
@@ -133,7 +135,7 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 		List<Feature> features = GPXReader.loadData(this, gpxFileName);
 
 		// Only add markers in and around Berlin
-		Location centroid = GeoUtils.getCentroid(GeoUtils.getLocationsFromFeatures(features));
+		Location centroid = GeoUtils.getEuclideanCentroid(GeoUtils.getLocationsFromFeatures(features));
 		if (GeoUtils.getDistance(centroid, berlinLocation) > 100) {
 			println("\tToo far away! Ommitting.");
 			return;
