@@ -47,14 +47,15 @@ public class BikeTrailsSmoothingTestApp extends PApplet {
 		MapUtils.createDefaultEventDispatcher(this, map);
 
 		// Create marker
-		List<Feature> features = GPXReader.loadData(this, "RK_gpx _2012-09-13_1030.gpx");
+		List<Feature> features = GPXReader.loadData(this, "runkeeper-2012-Aug-Sep/RK_gpx _2012-09-13_1030.gpx");
+		println("Loaded " + features.size() + " features");
 		MarkerFactory markerFactory = new MarkerFactory();
 		List<Marker> markers = markerFactory.createMarkers(features);
 		map.addMarkers(markers);
 
 		// Center around bike path (by panning to center of all features)
 		locations = GeoUtils.getLocationsFromFeatures(features);
-		Location center = GeoUtils.getCentroid(locations);
+		Location center = GeoUtils.getEuclideanCentroid(locations);
 		map.panTo(center);
 
 		// UI
