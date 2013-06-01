@@ -8,6 +8,8 @@ import processing.core.PVector;
 import codeanticode.glgraphics.GLConstants;
 import controlP5.ControlEvent;
 import controlP5.ControlP5;
+import controlP5.Label;
+import controlP5.Textlabel;
 import de.fhpotsdam.unfolding.UnfoldingMap;
 import de.fhpotsdam.unfolding.data.Feature;
 import de.fhpotsdam.unfolding.data.GPXReader;
@@ -29,13 +31,18 @@ public class BikeTrailsSmoothingTestApp extends PApplet {
 	UnfoldingMap map;
 	List<Location> locations;
 
-	float simplificationTolerance = 1;
+	float simplificationTolerance = 4;
 	int averageNumber = 5;
 	boolean showOriginal = true;
 	boolean showSimplified = true;
 	boolean showAveraged = true;
+	boolean showCombined = false;
 
 	ControlP5 cp5;
+	Textlabel numOriginalTL;
+	Textlabel numSimplifiedTL;
+	Textlabel numAverageTL;
+	Textlabel numCombinedTL;
 
 	public void setup() {
 		size(800, 600, GLConstants.GLGRAPHICS);
@@ -60,13 +67,22 @@ public class BikeTrailsSmoothingTestApp extends PApplet {
 
 		// UI
 		cp5 = new ControlP5(this);
-		cp5.addTextlabel("original").setText("ORIGINAL").setPosition(140, 12).setColorValue(color(255));
 		cp5.addSlider("simplificationTolerance").setPosition(20, 25).setRange(0, 25).setCaptionLabel("Simplification");
-		cp5.addSlider("averageNumber").setPosition(20, 40).setRange(1, 10).setCaptionLabel("Average");
+		Label label = cp5.addSlider("averageNumber").setPosition(20, 40).setRange(1, 10).setCaptionLabel("Average").getCaptionLabel();
+		
+		cp5.addTextlabel("original").setText("ORIGINAL").setPosition(144, 12).setFont(label.getFont()).setColorValue(color(255));
+		cp5.addTextlabel("combined").setText("SIMPL+AVG").setPosition(131, 55).setFont(label.getFont()).setColorValue(color(255));
 
 		cp5.addToggle("showOriginal").setPosition(190, 10).setSize(10, 10).setLabelVisible(false);
 		cp5.addToggle("showSimplified").setPosition(190, 25).setSize(10, 10).setLabelVisible(false);
 		cp5.addToggle("showAveraged").setPosition(190, 40).setSize(10, 10).setLabelVisible(false);
+		cp5.addToggle("showCombined").setPosition(190, 55).setSize(10, 10).setLabelVisible(false);
+
+		numOriginalTL = cp5.addTextlabel("numOriginal").setPosition(300, 12)
+				.setColorValue(color(200));
+		numSimplifiedTL = cp5.addTextlabel("numSimplified").setPosition(300, 27).setColorValue(color(200));
+		numAverageTL = cp5.addTextlabel("numAverage").setPosition(300, 42).setColorValue(color(200));
+		numCombinedTL = cp5.addTextlabel("numCombined").setPosition(300, 57).setColorValue(color(200));
 	}
 
 	public void controlEvent(ControlEvent theEvent) {
@@ -85,47 +101,59 @@ public class BikeTrailsSmoothingTestApp extends PApplet {
 		if (theEvent.isFrom(cp5.getController("showOriginal"))) {
 			showOriginal = (theEvent.getController().getValue() > 0);
 		}
+		if (theEvent.isFrom(cp5.getController("showCombined"))) {
+			showCombined = (theEvent.getController().getValue() > 0);
+		}
 
 	}
 
 	public void draw() {
 		background(0);
-		tint(255, 50);
+		tint(255, 200);
 		map.draw();
 		tint(255, 255);
 
-		// Draw points
+		// Update list of points
 		List<PVector> points = new ArrayList<PVector>();
 		for (Location location : locations) {
 			ScreenPosition pos = map.getScreenPosition(location);
 			points.add(pos);
 		}
-		if (!points.isEmpty()) {
-			// original below
-			// drawLine(points, color(0, 50), color(0, 50), 10);
-			// drawLine(points, color(255, 255, 0, 200), color(255, 255, 0, 200), 5);
 
-			// simplified
+		if (!points.isEmpty()) {
+
 			if (showSimplified) {
+				// simplified
 				List<PVector> simplifiedPoints = GeneralizationUtils.simplify(points, simplificationTolerance, true);
 				drawLine(simplifiedPoints, color(255, 0, 255, 160), color(255, 0, 255, 160), 5);
+				numSimplifiedTL.setText("(" + simplifiedPoints.size() + ")");
 			}
 
 			if (showAveraged) {
 				// moving average
-				List<PVector> averagedPoints = computeMovingAverage(points, averageNumber);
+				List<PVector> averagedPoints = GeneralizationUtils.computeMovingAverage(points, averageNumber);
 				drawLine(averagedPoints, color(0, 255, 255, 160), color(0, 255, 255, 160), 5);
+				numAverageTL.setText("(" + averagedPoints.size() + ")");
+			}
+
+			if (showCombined) {
+				List<PVector> averagedPoints = GeneralizationUtils.computeMovingAverage(points, averageNumber);
+				List<PVector> simplifiedAveragedPoints = GeneralizationUtils.simplify(averagedPoints,
+						simplificationTolerance, true);
+				drawLine(simplifiedAveragedPoints, color(255, 255, 255, 160), color(255, 255, 255, 160), 5);
+				numCombinedTL.setText("(" + simplifiedAveragedPoints.size() + ")");
 			}
 
 			if (showOriginal) {
 				// original on top
 				drawLine(points, color(255, 255, 0, 200), color(255, 255, 0, 200), 2);
+				numOriginalTL.setText("(" + points.size() + ")");
 			}
 		}
 
 		// UI background
 		fill(0);
-		rect(0, 0, width, 60);
+		rect(0, 0, width, 70);
 
 		stroke(255, 255, 0, 200);
 		strokeWeight(2);
@@ -139,51 +167,11 @@ public class BikeTrailsSmoothingTestApp extends PApplet {
 		strokeWeight(5);
 		line(205, 45, 280, 45);
 
+		stroke(255, 255, 255, 160);
+		strokeWeight(5);
+		line(205, 60, 280, 60);
+
 		// UI will be drawn in postDraw() by ControlP5
-	}
-
-	public List<PVector> computeMovingAverage(List<PVector> vertices, int np) {
-		float[] xValues = new float[vertices.size()];
-		float[] yValues = new float[vertices.size()];
-		for (int i = 0; i < vertices.size(); i++) {
-			xValues[i] = vertices.get(i).x;
-			yValues[i] = vertices.get(i).y;
-		}
-
-		float[] xAvgValues = computeMovingAverage(xValues, np);
-		float[] yAvgValues = computeMovingAverage(yValues, np);
-
-		List<PVector> averageVertices = new ArrayList<PVector>();
-		for (int i = 0; i < xAvgValues.length; i++) {
-			averageVertices.add(new PVector(xAvgValues[i], yAvgValues[i]));
-		}
-		return averageVertices;
-	}
-
-	/**
-	 * @param np
-	 *            number of points to average over
-	 */
-	public float[] computeMovingAverage(float[] values, int np) {
-		float[] mm = new float[values.length - np];
-		for (int i = 0; i < mm.length; i++) {
-			float sum = 0;
-			for (int j = 0; j < np; j++) {
-				sum = sum + values[i + j];
-			}
-			mm[i] = sum / np;
-		}
-		return mm;
-	}
-
-	public void keyPressed() {
-		if (key == 'T') {
-			simplificationTolerance++;
-		}
-		if (key == 't') {
-			simplificationTolerance--;
-		}
-		println(simplificationTolerance);
 	}
 
 	public void drawLine(List<PVector> points, int strokeColor, int color) {
