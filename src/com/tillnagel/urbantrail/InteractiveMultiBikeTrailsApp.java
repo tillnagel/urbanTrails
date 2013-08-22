@@ -18,7 +18,6 @@ import de.fhpotsdam.unfolding.data.MarkerFactory;
 import de.fhpotsdam.unfolding.geo.Location;
 import de.fhpotsdam.unfolding.marker.Marker;
 import de.fhpotsdam.unfolding.marker.MarkerManager;
-import de.fhpotsdam.unfolding.providers.MBTilesMapProvider;
 import de.fhpotsdam.unfolding.utils.GeoUtils;
 import de.fhpotsdam.unfolding.utils.MapUtils;
 
@@ -30,6 +29,8 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 	// Start location
 	Location berlinLocation = new Location(52.5f, 13.4f);
 
+	//Location netherlandsLocation = new Location(51.05f, 3.71f);
+
 	// Interactive background map
 	UnfoldingMap map;
 
@@ -39,35 +40,45 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 	// To interactively select time ranges to filter markers
 	TimeRangeSlider timeRangeSlider;
 
+	int width = 1850, height = 1000;
+	int mapWidth = width, mapHeight = 1000;
+
 	public void setup() {
-		size(1200, 780, GLConstants.GLGRAPHICS);
+		size(width, height, GLConstants.GLGRAPHICS);
 
 		// map = new UnfoldingMap(this, 0, 0, 1200, 700, new MyMapBox.WorldDarkMapProvider());
-		map = new UnfoldingMap(this, 0, 0, 1200, 700, new MBTilesMapProvider("jdbc:sqlite:./berlin-dark.mbtiles"));
-		// map = new UnfoldingMap(this, 0, 0, 1200, 700);
-		// map = new UnfoldingMap(this, 0, 0, 1200, 700, new MapBox.WorldLightProvider());
+		// map = new UnfoldingMap(this, 0, 0, mapWidth, mapHeight, new
+		// MBTilesMapProvider("jdbc:sqlite:./berlin-dark.mbtiles"));
+		map = new UnfoldingMap(this, 0, 0, mapWidth, mapHeight);
+		//map = new UnfoldingMap(this, 0, 0, 1200, 700, new MapBox.WorldLightProvider());
 		map.zoomAndPanTo(berlinLocation, 13);
 		map.setZoomRange(10, 17);
 		MapUtils.createMouseEventDispatcher(this, map);
-		//MapUtils.createDefaultEventDispatcher(this, map);
+		// MapUtils.createDefaultEventDispatcher(this, map);
 
 		// Create line markers with outer glow
 		markerFactory = new MarkerFactory();
+		// markerFactory.setLineClass(GlowLinesMarker.class);
 		markerFactory.setLineClass(GlowLinesMarker.class);
 
 		// Load bike trails from GPX files
-		//String dir = sketchPath("runkeeper-2012-Aug-Sep");
+		// String dir = sketchPath("runkeeper-2012-Aug-Sep");
+		// String dir = sketchPath("runkeeper-schinkomat");
 		String dir = sketchPath("test");
+		//String dir = sketchPath("runkeeper-vantomme");
 		String[] gpsFileNames = FileUtils.listFile(dir, "gpx");
 		for (String gpsFileName : gpsFileNames) {
 			loadAndCreateMarkers(gpsFileName);
 		}
-		centerAroundAllMarkers(map.getMarkers());
+		centerMap();
 
 		// UI
-		timeRangeSlider = new StyledDateRangeSlider(this, width / 2 - 300 / 2, 740, 300, 16, new DateTime(2012, 8, 1,
-				0, 0, 0), new DateTime(2012, 9, 20, 0, 0, 0), 60 * 60 * 24);
-		timeRangeSlider.setCurrentRange(new DateTime(2012, 8, 10, 0, 0, 0), new DateTime(2012, 8, 20, 0, 0, 0));
+		timeRangeSlider = new StyledDateRangeSlider(this, width / 2 - 300 / 2, height - 40, 300, 16, new DateTime(2012,
+				7, 1,
+				0, 0, 0), new DateTime(2013, 6, 30, 0, 0, 0), 60 * 60 * 24);
+		timeRangeSlider.setCurrentRange(new DateTime(2012, 6, 1, 0, 0, 0), new DateTime(2013, 5, 31, 0, 0, 0));
+		timeRangeSlider.setAnimationDelay(1);
+		timeRangeSlider.setAnimationIntervalSeconds(60 * 60 * 24);
 	}
 
 	public void draw() {
@@ -75,7 +86,7 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 
 		noStroke();
 		fill(58, 63, 66);
-		rect(0, 700, width, 100);
+		rect(0, height - 80, width, 80);
 		timeRangeSlider.draw();
 	}
 
@@ -86,6 +97,12 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 
 	// Interaction --------------------------------------------------
 
+	public void centerMap() {
+		centerAroundAllMarkers(map.getMarkers());
+		map.panBy(0, 100);
+
+	}
+
 	public void keyPressed() {
 		if (key == 'c') {
 			centerAroundAllMarkers(map.getMarkers());
@@ -93,6 +110,19 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 
 		if (key == 'f') {
 			println("fps: " + frameRate);
+		}
+
+		if (key == 'M') {
+			DateTime startDateTime = timeRangeSlider.getCurrentStartDateTime();
+			DateTime newStartDateTime = startDateTime.plusMonths(1);
+			DateTime newEndDateTime = newStartDateTime.plusMonths(1).minusDays(1);
+			timeRangeSlider.setCurrentRange(newStartDateTime, newEndDateTime);
+		}
+		if (key == 'm') {
+			DateTime startDateTime = timeRangeSlider.getCurrentStartDateTime();
+			DateTime newStartDateTime = startDateTime.minusMonths(1);
+			DateTime newEndDateTime = newStartDateTime.plusMonths(1).minusDays(1);
+			timeRangeSlider.setCurrentRange(newStartDateTime, newEndDateTime);
 		}
 
 		// Enable key interaction
@@ -118,8 +148,10 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 
 			if (markerTime.isAfter(startDateTime) && markerTime.isBefore(endDateTime)) {
 				m.setSelected(true);
+				m.setHidden(false);
 			} else {
 				m.setSelected(false);
+				m.setHidden(true);
 			}
 		}
 	}
@@ -134,10 +166,17 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 		println("Loading " + gpxFileName);
 		List<Feature> features = GPXReader.loadData(this, gpxFileName);
 
-		// Only add markers in and around Berlin
+		// Only add markers for routes in and around Berlin
 		Location centroid = GeoUtils.getEuclideanCentroid(GeoUtils.getLocationsFromFeatures(features));
 		if (GeoUtils.getDistance(centroid, berlinLocation) > 100) {
 			println("\tToo far away! Ommitting.");
+			return;
+		}
+
+		// Only add markers for cycling routes
+		String trackName = features.get(0).getStringProperty("name");
+		if (trackName != null && !trackName.contains("Cycling")) {
+			println("\tOmmiting non-cycling track.");
 			return;
 		}
 
@@ -145,10 +184,10 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 		List<Marker> markers = markerFactory.createMarkers(features);
 		for (Marker marker : markers) {
 			GlowLinesMarker glowlineMarker = (GlowLinesMarker) marker;
-			glowlineMarker.setColor(color(255, 0, 0, 10));
-			glowlineMarker.setHighlightColor(color(255, 0, 0, 120));
-			glowlineMarker.setStrokeWeight(2);
-			glowlineMarker.setAlpha(20);
+			glowlineMarker.setColor(color(255, 0, 0, 0));
+			glowlineMarker.setHighlightColor(color(255, 0, 0, 200));
+			glowlineMarker.setStrokeWeight(1);
+			glowlineMarker.setAlpha(2);
 			glowlineMarker.setGlowStrokeWeight(6);
 		}
 		map.addMarkers(markers);

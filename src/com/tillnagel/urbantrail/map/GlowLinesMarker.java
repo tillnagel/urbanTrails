@@ -20,7 +20,7 @@ public class GlowLinesMarker extends SimpleLinesMarker {
 
 	@Override
 	public void draw(PGraphics pg, List<MapPosition> mapPositions) {
-		if (mapPositions.isEmpty())
+		if (mapPositions.isEmpty() || isHidden())
 			return;
 
 		// Draw glow around lines in lightened color

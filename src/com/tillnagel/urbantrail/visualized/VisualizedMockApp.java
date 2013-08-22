@@ -1,5 +1,6 @@
-package com.tillnagel.urbantrail;
+package com.tillnagel.urbantrail.visualized;
 
+import java.util.HashMap;
 import java.util.List;
 
 import org.joda.time.DateTime;
@@ -7,7 +8,9 @@ import org.joda.time.DateTime;
 import processing.core.PApplet;
 import codeanticode.glgraphics.GLConstants;
 
-import com.tillnagel.urbantrail.map.GlowLinesFineMarker;
+import com.tillnagel.urbantrail.FileUtils;
+import com.tillnagel.urbantrail.StyledDateRangeSlider;
+import com.tillnagel.urbantrail.map.GlowLinesMarker;
 
 import de.fhpotsdam.rangeslider.TimeRangeSlider;
 import de.fhpotsdam.unfolding.UnfoldingMap;
@@ -17,14 +20,14 @@ import de.fhpotsdam.unfolding.data.MarkerFactory;
 import de.fhpotsdam.unfolding.geo.Location;
 import de.fhpotsdam.unfolding.marker.Marker;
 import de.fhpotsdam.unfolding.marker.MarkerManager;
-import de.fhpotsdam.unfolding.providers.MBTilesMapProvider;
+import de.fhpotsdam.unfolding.providers.MapBox;
 import de.fhpotsdam.unfolding.utils.GeoUtils;
 import de.fhpotsdam.unfolding.utils.MapUtils;
 
 /**
  * Loads and displays multiple bike trails.
  */
-public class InteractiveMultiBikeTrailsFineApp extends PApplet {
+public class VisualizedMockApp extends PApplet {
 
 	// Start location
 	Location berlinLocation = new Location(52.5f, 13.4f);
@@ -38,44 +41,53 @@ public class InteractiveMultiBikeTrailsFineApp extends PApplet {
 	// To interactively select time ranges to filter markers
 	TimeRangeSlider timeRangeSlider;
 
+	int width = 1850, height = 1000;
+	int mapWidth = width, mapHeight = 1000;
+
 	public void setup() {
-		size(1200, 780, GLConstants.GLGRAPHICS);
+		size(width, height, GLConstants.GLGRAPHICS);
 
 		// map = new UnfoldingMap(this, 0, 0, 1200, 700, new MyMapBox.WorldDarkMapProvider());
-		map = new UnfoldingMap(this, 0, 0, 1200, 700, new MBTilesMapProvider("jdbc:sqlite:./berlin-dark.mbtiles"));
+		map = new UnfoldingMap(this, 0, 0, mapWidth, mapHeight);
 		// map = new UnfoldingMap(this, 0, 0, 1200, 700);
-		// map = new UnfoldingMap(this, 0, 0, 1200, 700, new MapBox.WorldLightProvider());
+		//map = new UnfoldingMap(this, 0, 0, mapWidth, mapHeight, new MapBox.WorldLightProvider());
 		map.zoomAndPanTo(berlinLocation, 13);
 		map.setZoomRange(10, 17);
+		map.setBackgroundColor(255);
 		MapUtils.createMouseEventDispatcher(this, map);
 		// MapUtils.createDefaultEventDispatcher(this, map);
 
 		// Create line markers with outer glow
 		markerFactory = new MarkerFactory();
-		markerFactory.setLineClass(GlowLinesFineMarker.class);
+		// markerFactory.setLineClass(GlowLinesMarker.class);
+		markerFactory.setLineClass(GlowLinesMarker.class);
 
 		// Load bike trails from GPX files
-		// String dir = sketchPath("runkeeper-2012-11-20");
-		String dir = sketchPath("test");
+		String dir = sketchPath("runkeeper-2012-Aug-Sep");
+		// String dir = sketchPath("runkeeper-schinkomat");
+		// String dir = sketchPath("test");
 		String[] gpsFileNames = FileUtils.listFile(dir, "gpx");
 		for (String gpsFileName : gpsFileNames) {
 			loadAndCreateMarkers(gpsFileName);
 		}
-		centerAroundAllMarkers(map.getMarkers());
+		centerMap();
 
 		// UI
-		timeRangeSlider = new StyledDateRangeSlider(this, width / 2 - 300 / 2, 740, 300, 16, new DateTime(2012, 10, 31,
-				0, 0, 0), new DateTime(2012, 11, 03, 0, 0, 0), 60);
-		timeRangeSlider.setCurrentRange(new DateTime(2012, 10, 31, 9, 0, 0), new DateTime(2012, 10, 31, 12, 0, 0));
+		timeRangeSlider = new StyledDateRangeSlider(this, width / 2 - 300 / 2, height - 40, 300, 16, new DateTime(2012,
+				7, 1,
+				0, 0, 0), new DateTime(2013, 6, 30, 0, 0, 0), 60 * 60 * 24);
+		timeRangeSlider.setCurrentRange(new DateTime(2012, 8, 1, 0, 0, 0), new DateTime(2012, 8, 31, 0, 0, 0));
 		timeRangeSlider.setAnimationDelay(1);
+		timeRangeSlider.setAnimationIntervalSeconds(60 * 60 * 24);
 	}
 
 	public void draw() {
+		background(255);
 		map.draw();
 
 		noStroke();
 		fill(58, 63, 66);
-		rect(0, 700, width, 100);
+		rect(0, height - 80, width, 80);
 		timeRangeSlider.draw();
 	}
 
@@ -86,6 +98,12 @@ public class InteractiveMultiBikeTrailsFineApp extends PApplet {
 
 	// Interaction --------------------------------------------------
 
+	public void centerMap() {
+		centerAroundAllMarkers(map.getMarkers());
+		map.panBy(0, 100);
+
+	}
+
 	public void keyPressed() {
 		if (key == 'c') {
 			centerAroundAllMarkers(map.getMarkers());
@@ -93,6 +111,19 @@ public class InteractiveMultiBikeTrailsFineApp extends PApplet {
 
 		if (key == 'f') {
 			println("fps: " + frameRate);
+		}
+
+		if (key == 'M') {
+			DateTime startDateTime = timeRangeSlider.getCurrentStartDateTime();
+			DateTime newStartDateTime = startDateTime.plusMonths(1);
+			DateTime newEndDateTime = newStartDateTime.plusMonths(1).minusDays(1);
+			timeRangeSlider.setCurrentRange(newStartDateTime, newEndDateTime);
+		}
+		if (key == 'm') {
+			DateTime startDateTime = timeRangeSlider.getCurrentStartDateTime();
+			DateTime newStartDateTime = startDateTime.minusMonths(1);
+			DateTime newEndDateTime = newStartDateTime.plusMonths(1).minusDays(1);
+			timeRangeSlider.setCurrentRange(newStartDateTime, newEndDateTime);
 		}
 
 		// Enable key interaction
@@ -112,14 +143,17 @@ public class InteractiveMultiBikeTrailsFineApp extends PApplet {
 	private void filterMarkersByTime(DateTime startDateTime, DateTime endDateTime) {
 		MarkerManager<Marker> mm = map.getDefaultMarkerManager();
 		for (Marker m : mm.getMarkers()) {
+			HashMap<String, Object> properties = m.getProperties();
+			String timeString = (String) properties.get("time");
+			DateTime markerTime = new DateTime(timeString);
 
-			GlowLinesFineMarker fm = (GlowLinesFineMarker) m;
-			fm.setSelectedTimeRange(startDateTime, endDateTime);
-			// if (markerTime.isAfter(startDateTime) && markerTime.isBefore(endDateTime)) {
-			// m.setSelected(true);
-			// } else {
-			// m.setSelected(false);
-			// }
+			if (markerTime.isAfter(startDateTime) && markerTime.isBefore(endDateTime)) {
+				m.setSelected(true);
+				m.setHidden(false);
+			} else {
+				m.setSelected(false);
+				m.setHidden(true);
+			}
 		}
 	}
 
@@ -133,21 +167,54 @@ public class InteractiveMultiBikeTrailsFineApp extends PApplet {
 		println("Loading " + gpxFileName);
 		List<Feature> features = GPXReader.loadData(this, gpxFileName);
 
-		// Only add markers in and around Berlin
+		// Only add markers for routes in and around Berlin
 		Location centroid = GeoUtils.getEuclideanCentroid(GeoUtils.getLocationsFromFeatures(features));
 		if (GeoUtils.getDistance(centroid, berlinLocation) > 100) {
 			println("\tToo far away! Ommitting.");
 			return;
 		}
 
+		// Only add markers for cycling routes
+		String trackName = features.get(0).getStringProperty("name");
+		if (trackName != null && !trackName.contains("Cycling")) {
+			println("\tOmmiting non-cycling track.");
+			return;
+		}
+
 		// Create markers and set style
 		List<Marker> markers = markerFactory.createMarkers(features);
 		for (Marker marker : markers) {
-			GlowLinesFineMarker glowlineMarker = (GlowLinesFineMarker) marker;
-			glowlineMarker.setColor(color(255, 0, 0, 10));
-			glowlineMarker.setHighlightColor(color(255, 0, 0, 120));
+			GlowLinesMarker glowlineMarker = (GlowLinesMarker) marker;
+			int col = color(255);
+			switch (round(random(6))) {
+			case 0:
+				col = color(96, 170, 220);
+				break;
+			case 1:
+				col = color(205, 65, 118);
+				break;
+			case 2:
+				col = color(66, 133, 60);
+				break;
+			case 3:
+				col = color(245, 221, 72);
+				break;
+			case 4:
+				col = color(63, 131, 190);
+				break;
+			case 5:
+				col = color(102, 65, 120);
+				break;
+			}
+			// int col = color(96, 170, 220);
+			// int colcolor(205, 65, 118);
+			// color(66, 133, 60);
+			// color(245, 221, 72);
+
+			glowlineMarker.setColor(col);
+			glowlineMarker.setHighlightColor(col);
 			glowlineMarker.setStrokeWeight(2);
-			glowlineMarker.setAlpha(200);
+			glowlineMarker.setAlpha(80);
 			glowlineMarker.setGlowStrokeWeight(6);
 		}
 		map.addMarkers(markers);
