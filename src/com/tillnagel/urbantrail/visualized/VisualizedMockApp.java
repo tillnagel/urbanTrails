@@ -8,8 +8,8 @@ import org.joda.time.DateTime;
 import processing.core.PApplet;
 import codeanticode.glgraphics.GLConstants;
 
-import com.tillnagel.urbantrail.FileUtils;
-import com.tillnagel.urbantrail.StyledDateRangeSlider;
+import com.tillnagel.urbantrail.bike.FileUtils;
+import com.tillnagel.urbantrail.bike.StyledDateRangeSlider;
 import com.tillnagel.urbantrail.map.GlowLinesMarker;
 
 import de.fhpotsdam.rangeslider.TimeRangeSlider;

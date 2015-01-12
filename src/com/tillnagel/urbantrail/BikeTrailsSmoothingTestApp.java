@@ -5,7 +5,6 @@ import java.util.List;
 
 import processing.core.PApplet;
 import processing.core.PVector;
-import codeanticode.glgraphics.GLConstants;
 import controlP5.ControlEvent;
 import controlP5.ControlP5;
 import controlP5.Label;
@@ -45,11 +44,11 @@ public class BikeTrailsSmoothingTestApp extends PApplet {
 	Textlabel numCombinedTL;
 
 	public void setup() {
-		size(800, 600, GLConstants.GLGRAPHICS);
+		size(800, 600);
 
 		map = new UnfoldingMap(this, 0, 60, 800, 540, new MBTilesMapProvider("jdbc:sqlite:./berlin-dark.mbtiles"));
 		// map = new UnfoldingMap(this, 0, 60, 800, 540, new StamenMapProvider.TonerLite());
-		map.zoomAndPanTo(new Location(52.5f, 13.4f), 15);
+		map.zoomAndPanTo(15, new Location(52.5f, 13.4f));
 		map.setZoomRange(10, 17);
 		MapUtils.createDefaultEventDispatcher(this, map);
 
