@@ -6,7 +6,6 @@ import java.util.List;
 import org.joda.time.DateTime;
 
 import processing.core.PApplet;
-import codeanticode.glgraphics.GLConstants;
 
 import com.tillnagel.urbantrail.map.GlowLinesMarker;
 
@@ -43,21 +42,21 @@ public class InteractiveMultiBikeTrailsSaveLargeImageApp extends PApplet {
 	// To interactively select time ranges to filter markers
 	TimeRangeSlider timeRangeSlider;
 
-	
-//	int width = 1850, height = 1000;
-//	int mapWidth = width, mapHeight = 900;
+	// int width = 1850, height = 1000;
+	// int mapWidth = width, mapHeight = 900;
 	int width = 1400, height = 800;
 	int mapWidth = width, mapHeight = 800;
 	LargeMapImageUtils lmiUtils;
-	
+
 	public void setup() {
-		size(width, height, GLConstants.GLGRAPHICS);
+		size(width, height, OPENGL);
 
 		// map = new UnfoldingMap(this, 0, 0, 1200, 700, new MyMapBox.WorldDarkMapProvider());
-		map = new UnfoldingMap(this, 0, 0, mapWidth, mapHeight, new MBTilesMapProvider("jdbc:sqlite:./berlin-dark.mbtiles"));
+		map = new UnfoldingMap(this, 0, 0, mapWidth, mapHeight, new MBTilesMapProvider(
+				"jdbc:sqlite:./berlin-dark.mbtiles"));
 		// map = new UnfoldingMap(this, 0, 0, 1200, 700);
 		// map = new UnfoldingMap(this, 0, 0, 1200, 700, new MapBox.WorldLightProvider());
-		map.zoomAndPanTo(berlinLocation, 14);
+		map.zoomAndPanTo(14, berlinLocation);
 		map.setZoomRange(10, 17);
 		MapUtils.createMouseEventDispatcher(this, map);
 		// MapUtils.createDefaultEventDispatcher(this, map);
@@ -69,21 +68,20 @@ public class InteractiveMultiBikeTrailsSaveLargeImageApp extends PApplet {
 		// Load bike trails from GPX files
 		// String dir = sketchPath("runkeeper-2012-Aug-Sep");
 		String dir = sketchPath("runkeeper-all");
-		//String dir = sketchPath("test");
+		// String dir = sketchPath("test");
 		String[] gpsFileNames = FileUtils.listFile(dir, "gpx");
 		for (String gpsFileName : gpsFileNames) {
 			loadAndCreateMarkers(gpsFileName);
 		}
 		centerMap();
-		
 
 		// UI
-		timeRangeSlider = new StyledDateRangeSlider(this, width / 2 - 300 / 2, height - 40, 300, 16, new DateTime(2012, 7, 1,
-				0, 0, 0), new DateTime(2013, 6, 30, 0, 0, 0), 60 * 60 * 24);
+		timeRangeSlider = new StyledDateRangeSlider(this, width / 2 - 300 / 2, height - 40, 300, 16, new DateTime(2012,
+				7, 1, 0, 0, 0), new DateTime(2013, 6, 30, 0, 0, 0), 60 * 60 * 24);
 		timeRangeSlider.setCurrentRange(new DateTime(2012, 8, 1, 0, 0, 0), new DateTime(2012, 8, 31, 0, 0, 0));
 		timeRangeSlider.setAnimationDelay(1);
 		timeRangeSlider.setAnimationIntervalSeconds(60 * 60 * 24);
-		
+
 		// Init tool to save large map
 		lmiUtils = new LargeMapImageUtils(this, map);
 		lmiUtils.setImageFileSuffix(".tif");
@@ -96,7 +94,7 @@ public class InteractiveMultiBikeTrailsSaveLargeImageApp extends PApplet {
 		fill(58, 63, 66);
 		rect(0, mapHeight - 60, width, 60);
 		timeRangeSlider.draw();
-		
+
 		lmiUtils.run();
 	}
 
@@ -104,20 +102,20 @@ public class InteractiveMultiBikeTrailsSaveLargeImageApp extends PApplet {
 	public void timeUpdated(DateTime startDateTime, DateTime endDateTime) {
 		filterMarkersByTime(startDateTime, endDateTime);
 	}
-	
+
 	// Interaction --------------------------------------------------
-	
+
 	public void centerMap() {
 		centerAroundAllMarkers(map.getMarkers());
 		map.panBy(0, 100);
 
 	}
-	
+
 	public void keyPressed() {
 		if (key == 's') {
 			lmiUtils.init();
 		}
-		
+
 		if (key == 'c') {
 			centerAroundAllMarkers(map.getMarkers());
 		}

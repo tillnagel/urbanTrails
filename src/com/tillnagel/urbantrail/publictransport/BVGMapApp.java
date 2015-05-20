@@ -5,7 +5,6 @@ import java.util.List;
 
 import processing.core.PApplet;
 import processing.core.PGraphics;
-import codeanticode.glgraphics.GLConstants;
 import de.fhpotsdam.unfolding.UnfoldingMap;
 import de.fhpotsdam.unfolding.data.Feature;
 import de.fhpotsdam.unfolding.data.GeoJSONReader;
@@ -21,7 +20,7 @@ public class BVGMapApp extends PApplet {
 	PGraphics pdfG;
 
 	public void setup() {
-		size(1024, 768, GLConstants.GLGRAPHICS);
+		size(1024, 768, OPENGL);
 		smooth();
 
 		map = new UnfoldingMap(this);
@@ -42,7 +41,7 @@ public class BVGMapApp extends PApplet {
 
 		for (Marker m : map.getMarkers()) {
 			SimpleLinesMarker lineMarker = (SimpleLinesMarker) m;
-			
+
 			// Convert locations to map positions in order to use marker's draw.
 			List<MapPosition> mapPositions = new ArrayList<MapPosition>();
 			for (Location loc : lineMarker.getLocations()) {
@@ -50,7 +49,7 @@ public class BVGMapApp extends PApplet {
 				mapPositions.add(new MapPosition(xy));
 			}
 			// Use original drawing style, but draw on PApplet's own canvas (instead of map)
-			lineMarker.draw(pdfG , mapPositions);
+			lineMarker.draw(pdfG, mapPositions);
 		}
 		endRecord();
 		println("Done");

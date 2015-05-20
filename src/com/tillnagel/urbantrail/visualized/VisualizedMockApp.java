@@ -6,7 +6,6 @@ import java.util.List;
 import org.joda.time.DateTime;
 
 import processing.core.PApplet;
-import codeanticode.glgraphics.GLConstants;
 
 import com.tillnagel.urbantrail.bike.FileUtils;
 import com.tillnagel.urbantrail.bike.StyledDateRangeSlider;
@@ -20,7 +19,6 @@ import de.fhpotsdam.unfolding.data.MarkerFactory;
 import de.fhpotsdam.unfolding.geo.Location;
 import de.fhpotsdam.unfolding.marker.Marker;
 import de.fhpotsdam.unfolding.marker.MarkerManager;
-import de.fhpotsdam.unfolding.providers.MapBox;
 import de.fhpotsdam.unfolding.utils.GeoUtils;
 import de.fhpotsdam.unfolding.utils.MapUtils;
 
@@ -45,12 +43,12 @@ public class VisualizedMockApp extends PApplet {
 	int mapWidth = width, mapHeight = 1000;
 
 	public void setup() {
-		size(width, height, GLConstants.GLGRAPHICS);
+		size(width, height, OPENGL);
 
 		// map = new UnfoldingMap(this, 0, 0, 1200, 700, new MyMapBox.WorldDarkMapProvider());
 		map = new UnfoldingMap(this, 0, 0, mapWidth, mapHeight);
 		// map = new UnfoldingMap(this, 0, 0, 1200, 700);
-		//map = new UnfoldingMap(this, 0, 0, mapWidth, mapHeight, new MapBox.WorldLightProvider());
+		// map = new UnfoldingMap(this, 0, 0, mapWidth, mapHeight, new MapBox.WorldLightProvider());
 		map.zoomAndPanTo(berlinLocation, 13);
 		map.setZoomRange(10, 17);
 		map.setBackgroundColor(255);
@@ -74,8 +72,7 @@ public class VisualizedMockApp extends PApplet {
 
 		// UI
 		timeRangeSlider = new StyledDateRangeSlider(this, width / 2 - 300 / 2, height - 40, 300, 16, new DateTime(2012,
-				7, 1,
-				0, 0, 0), new DateTime(2013, 6, 30, 0, 0, 0), 60 * 60 * 24);
+				7, 1, 0, 0, 0), new DateTime(2013, 6, 30, 0, 0, 0), 60 * 60 * 24);
 		timeRangeSlider.setCurrentRange(new DateTime(2012, 8, 1, 0, 0, 0), new DateTime(2012, 8, 31, 0, 0, 0));
 		timeRangeSlider.setAnimationDelay(1);
 		timeRangeSlider.setAnimationIntervalSeconds(60 * 60 * 24);

@@ -6,7 +6,6 @@ import java.util.List;
 import org.joda.time.DateTime;
 
 import processing.core.PApplet;
-import codeanticode.glgraphics.GLConstants;
 
 import com.tillnagel.urbantrail.map.GlowLinesMarker;
 
@@ -15,6 +14,7 @@ import de.fhpotsdam.unfolding.UnfoldingMap;
 import de.fhpotsdam.unfolding.data.Feature;
 import de.fhpotsdam.unfolding.data.GPXReader;
 import de.fhpotsdam.unfolding.data.MarkerFactory;
+import de.fhpotsdam.unfolding.events.EventDispatcher;
 import de.fhpotsdam.unfolding.geo.Location;
 import de.fhpotsdam.unfolding.marker.Marker;
 import de.fhpotsdam.unfolding.marker.MarkerManager;
@@ -29,7 +29,7 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 	// Start location
 	Location berlinLocation = new Location(52.5f, 13.4f);
 
-	//Location netherlandsLocation = new Location(51.05f, 3.71f);
+	// Location netherlandsLocation = new Location(51.05f, 3.71f);
 
 	// Interactive background map
 	UnfoldingMap map;
@@ -41,17 +41,17 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 	TimeRangeSlider timeRangeSlider;
 
 	int width = 1850, height = 1000;
-	int mapWidth = width, mapHeight = 1000;
+	int mapWidth = width, mapHeight = 920;
 
 	public void setup() {
-		size(width, height, GLConstants.GLGRAPHICS);
+		size(width, height, OPENGL);
 
 		// map = new UnfoldingMap(this, 0, 0, 1200, 700, new MyMapBox.WorldDarkMapProvider());
 		// map = new UnfoldingMap(this, 0, 0, mapWidth, mapHeight, new
 		// MBTilesMapProvider("jdbc:sqlite:./berlin-dark.mbtiles"));
 		map = new UnfoldingMap(this, 0, 0, mapWidth, mapHeight);
-		//map = new UnfoldingMap(this, 0, 0, 1200, 700, new MapBox.WorldLightProvider());
-		map.zoomAndPanTo(berlinLocation, 13);
+		// map = new UnfoldingMap(this, 0, 0, 1200, 700, new MapBox.WorldLightProvider());
+		map.zoomAndPanTo(13, berlinLocation);
 		map.setZoomRange(10, 17);
 		MapUtils.createMouseEventDispatcher(this, map);
 		// MapUtils.createDefaultEventDispatcher(this, map);
@@ -62,28 +62,28 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 		markerFactory.setLineClass(GlowLinesMarker.class);
 
 		// Load bike trails from GPX files
-		// String dir = sketchPath("runkeeper-2012-Aug-Sep");
+		String dir = sketchPath("runkeeper-2012-Aug-Sep");
 		// String dir = sketchPath("runkeeper-schinkomat");
-		String dir = sketchPath("test");
-		//String dir = sketchPath("runkeeper-vantomme");
+		// String dir = sketchPath("runkeeper-vantomme");
 		String[] gpsFileNames = FileUtils.listFile(dir, "gpx");
 		for (String gpsFileName : gpsFileNames) {
 			loadAndCreateMarkers(gpsFileName);
 		}
 		centerMap();
-
+		
+		DateTime startDateTime = new DateTime(2012,	8, 1, 0, 0, 0);
+		DateTime endDateTime = new DateTime(2012, 9, 30, 0, 0, 0);
+		
 		// UI
-		timeRangeSlider = new StyledDateRangeSlider(this, width / 2 - 300 / 2, height - 40, 300, 16, new DateTime(2012,
-				7, 1,
-				0, 0, 0), new DateTime(2013, 6, 30, 0, 0, 0), 60 * 60 * 24);
-		timeRangeSlider.setCurrentRange(new DateTime(2012, 6, 1, 0, 0, 0), new DateTime(2013, 5, 31, 0, 0, 0));
+		timeRangeSlider = new StyledDateRangeSlider(this, width / 2 - 300 / 2, height - 40, 300, 16, startDateTime, endDateTime, 60 * 60 * 24);
+		timeRangeSlider.setCurrentRange(startDateTime, startDateTime.plusDays(7));
 		timeRangeSlider.setAnimationDelay(1);
 		timeRangeSlider.setAnimationIntervalSeconds(60 * 60 * 24);
 	}
 
 	public void draw() {
 		map.draw();
-
+		
 		noStroke();
 		fill(58, 63, 66);
 		rect(0, height - 80, width, 80);
@@ -169,7 +169,7 @@ public class InteractiveMultiBikeTrailsApp extends PApplet {
 		// Only add markers for routes in and around Berlin
 		Location centroid = GeoUtils.getEuclideanCentroid(GeoUtils.getLocationsFromFeatures(features));
 		if (GeoUtils.getDistance(centroid, berlinLocation) > 100) {
-			println("\tToo far away! Ommitting.");
+			println("\tToo far away! Ommitting track.");
 			return;
 		}
 
